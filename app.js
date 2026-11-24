@@ -31,7 +31,7 @@ $("habitList").addEventListener("change",e=>{if(!e.target.matches("[data-habit]"
 $("habitList").addEventListener("click",e=>{const b=e.target.closest("[data-remove]");if(!b)return;const id=Number(b.dataset.remove);state.habits=state.habits.filter(h=>h.id!==id);state.checked=state.checked.filter(x=>x!==id);save();render()});
 $("habitForm").addEventListener("submit",e=>{e.preventDefault();const text=$("newHabit").value.trim();if(!text)return;state.habits.push({id:Date.now(),text,custom:true});$("newHabit").value="";save();render();toast(state.lang==="en"?"Habit added":"Habitude ajoutée")});
 $("waterPlus").addEventListener("click",()=>{state.water=Math.min(20,state.water+1);save();render()});$("waterMinus").addEventListener("click",()=>{state.water=Math.max(0,state.water-1);save();render()});
-$("resetBtn").addEventListener("click",()=>{if(!confirm(state.lang==="en"?"Reset all demo data?":"Réinitialiser les données de démonstration ?"))return;localStorage.clear();location.reload()});
+
 applyLanguage();
 if("serviceWorker" in navigator && location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
 

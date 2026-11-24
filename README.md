@@ -39,3 +39,13 @@ L'authentification Supabase nécessite un serveur local, pas l'ouverture directe
 - `python -m http.server 8000`, puis ouvrir `http://localhost:8000`.
 
 La PWA nécessite HTTPS en production (localhost est accepté pour le développement).
+
+
+## Version H+ Outdoor + profil
+- Nouveau module H+ Outdoor : course, vélo, marche et marche rapide avec GPS en direct, distance, durée, allure, vitesse, tracé et historique local.
+- Le suivi nécessite HTTPS et l'autorisation de localisation précise. La PWA tente d'utiliser Screen Wake Lock pour éviter que l'écran s'éteigne. Un navigateur mobile peut toutefois suspendre la géolocalisation lorsque l'écran est réellement verrouillé ou que l'application passe en arrière-plan. Pour un suivi fiable écran verrouillé, une application Android native sera nécessaire.
+- Photo de profil : choisir une image JPG/PNG/WebP de 5 Mo maximum après connexion.
+- Le bouton de réinitialisation de démonstration a été retiré. La déconnexion vide les champs du formulaire.
+
+## Mise à jour Supabase
+Dans Supabase > SQL Editor, exécuter le fichier `supabase-schema.sql` complet. Si le SQL échoue, ne pas relancer en boucle : conserver le message exact de l'erreur et le numéro de ligne pour diagnostic. Le bucket `profile-photos` est créé par le script. L'utilisateur propriétaire doit s'être inscrit avec l'adresse propriétaire configurée dans le script pour recevoir automatiquement le rôle owner.

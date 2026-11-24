@@ -8,6 +8,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <title>HUMAN+ — Your growth, your pace</title>
 </head>
 <body>
@@ -18,6 +19,7 @@
       <nav class="nav">
         <button class="nav-item active" data-view="dashboard"><span>▦</span><b data-i18n="overview">Vue d'ensemble</b></button>
         <button class="nav-item" data-view="fitness"><span>◈</span><b data-i18n="fitness">Fitness</b></button>
+        <button class="nav-item" data-view="outdoor"><span>⌁</span><b>H+ Outdoor</b></button>
         <button class="nav-item" data-view="habits"><span>✦</span><b data-i18n="habits">Habitudes</b></button>
         <button class="nav-item" data-view="nutrition"><span>◉</span><b data-i18n="nutrition">Nutrition</b></button>
       </nav>
@@ -38,7 +40,7 @@
           </select>
           <button class="auth-top-btn" id="openAuthBtn">Compte</button>
           
-          <button class="icon-btn" id="resetBtn" title="Reset demo" aria-label="Reset demo">↺</button>
+
         </div>
       </header>
 
@@ -81,6 +83,19 @@
         <article class="panel history-panel"><div class="panel-head"><h3 data-i18n="recentSessions">Séances récentes</h3><span class="subtle-pill" id="sessionTotal">0</span></div><div id="workoutHistory" class="empty-state" data-i18n="noSessions">Aucune séance enregistrée pour le moment.</div></article>
       </section>
 
+      <section class="view" id="outdoor">
+        <div class="page-intro"><div class="eyebrow">H+ OUTDOOR</div><h1>Ton activité, en plein air.</h1><p class="muted">Course, vélo et marche. Suis ta distance, ton allure et ton parcours GPS.</p></div>
+        <div class="outdoor-types" role="group" aria-label="Type d’activité"><button class="outdoor-type active" data-outdoor-type="Course">🏃 Course</button><button class="outdoor-type" data-outdoor-type="Vélo">🚴 Vélo</button><button class="outdoor-type" data-outdoor-type="Marche">🚶 Marche</button><button class="outdoor-type" data-outdoor-type="Marche rapide">⚡ Marche rapide</button></div>
+        <article class="panel outdoor-panel">
+          <div class="outdoor-status"><span class="pulse"></span><span id="gpsStatus">GPS en attente</span><span id="gpsAccuracy" class="muted small"></span></div>
+          <div class="outdoor-metrics"><div><small>DISTANCE</small><strong id="outDistance">0.00 <em>km</em></strong></div><div><small>DURÉE</small><strong id="outDuration">00:00:00</strong></div><div><small>ALLURE MOY.</small><strong id="outPace">— <em>/km</em></strong></div><div><small>VITESSE</small><strong id="outSpeed">0.0 <em>km/h</em></strong></div></div>
+          <div class="route-map" id="routeMap"><div class="route-map-empty">Le tracé GPS apparaîtra ici pendant l’activité.</div><svg id="routeSvg" viewBox="0 0 600 260" preserveAspectRatio="none" aria-label="Tracé GPS"><polyline id="routeLine" points="" /></svg></div>
+          <div class="outdoor-actions"><button class="primary-btn" id="outStartBtn">Démarrer l’activité</button><button class="secondary-btn" id="outPauseBtn" disabled>Pause</button><button class="secondary-btn" id="outStopBtn" disabled>Terminer</button></div>
+          <p class="muted small">Autorise la localisation précise et garde HUMAN+ ouvert. Pour éviter l’arrêt du GPS, l’application tente de garder l’écran allumé pendant le suivi. Le suivi GPS en arrière-plan ou écran réellement verrouillé n’est pas garanti par une PWA : Android peut suspendre le navigateur.</p>
+        </article>
+        <article class="panel history-panel"><div class="panel-head"><h3>Historique Outdoor</h3><span class="subtle-pill" id="outdoorTotal">0 activité(s)</span></div><div id="outdoorHistory" class="empty-state">Aucune activité enregistrée.</div></article>
+      </section>
+
       <section class="view" id="habits">
         <div class="page-intro"><div class="eyebrow">H+ DEVELOPMENT</div><h1 data-i18n="habitsTitle">Les petites victoires comptent.</h1><p class="muted" data-i18n="habitsSub">Coche tes habitudes et construis ta régularité, un jour à la fois.</p></div>
         <article class="panel"><div class="panel-head"><div><div class="eyebrow" data-i18n="dailyRoutine">ROUTINE QUOTIDIENNE</div><h3 data-i18n="yourHabits">Mes habitudes</h3></div><span class="subtle-pill" id="habitProgress">0/3</span></div><div id="habitList" class="habit-list"></div><div class="progress-track"><i id="habitProgressBar"></i></div><p class="muted small" data-i18n="habitEncourage">La constance vaut mieux que la perfection.</p></article>
@@ -109,6 +124,7 @@
             <div class="panel-head"><h3>Connexion / Inscription</h3><span class="subtle-pill" id="authStatus">Hors ligne</span></div>
             <form id="authForm" class="form-stack">
               <label for="authName">Nom affiché (pour l'inscription)</label><input id="authName" maxlength="80" autocomplete="name" placeholder="Ton nom">
+              <div class="profile-photo-area"><div class="profile-photo-preview" id="profilePhotoPreview">H+</div><div><label for="profilePhotoInput">Photo de profil</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp"><small class="muted">JPG, PNG ou WebP · 5 Mo maximum</small></div></div>
               <label for="authEmail">Adresse e-mail</label><input id="authEmail" type="email" autocomplete="email" required placeholder="nom@exemple.com">
               <label for="authPassword">Mot de passe</label><input id="authPassword" type="password" minlength="8" autocomplete="current-password" required placeholder="8 caractères minimum">
               <div class="button-row"><button class="primary-btn" type="submit" id="signInBtn">Se connecter</button><button class="secondary-btn" type="button" id="signUpBtn">Créer un compte</button></div>
@@ -139,8 +155,12 @@
       <footer class="footer"><span>© 2026 HUMAN+</span><span data-i18n="footerNote">Avance à ton rythme. Respecte tes limites.</span></footer>
     </main>
   </div>
-  <nav class="mobile-nav"><button class="active" data-view="dashboard">▦<small data-i18n="home">Accueil</small></button><button data-view="fitness">◈<small data-i18n="fitness">Fitness</small></button><button data-view="habits">✦<small data-i18n="habits">Habitudes</small></button><button data-view="nutrition">◉<small data-i18n="nutrition">Nutrition</small></button></nav>
+  <nav class="mobile-nav"><button class="active" data-view="dashboard">▦<small data-i18n="home">Accueil</small></button><button data-view="fitness">◈<small data-i18n="fitness">Fitness</small></button><button data-view="outdoor">⌁<small>Outdoor</small></button><button data-view="habits">✦<small data-i18n="habits">Habitudes</small></button><button data-view="nutrition">◉<small data-i18n="nutrition">Nutrition</small></button></nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>\n  <script src="supabase-config.js"></script>\n  <script type="module" src="supabase-auth.js"></script>
+  <script src="app.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="outdoor.js"></script>
+  <script type="module" src="supabase-auth.js"></script>
 </body>
 </html>

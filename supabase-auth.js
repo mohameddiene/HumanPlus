@@ -41,6 +41,9 @@ async function refreshRole(){
   const {data}=await supabase.from("admin_roles").select("role").eq("user_id",currentUser.id).maybeSingle();
   adminRole=data?.role||null;
 }
+function setAvatar(url){const preview=$('profilePhotoPreview'),mini=document.querySelector('.profile-mini .avatar');[preview,mini].forEach(el=>{if(!el)return;if(url){el.style.backgroundImage=`url("${url}")`;el.textContent=''}else{el.style.backgroundImage='';el.textContent='H+'}})}
+async function loadProfile(){if(!supabase||!currentUser)return;const {data}=await supabase.from('profiles').select('avatar_url,display_name').eq('id',currentUser.id).maybeSingle();setAvatar(data?.avatar_url||'');if(data?.display_name&&$('authName'))$('authName').value=data.display_name;}
+async function uploadAvatar(file){if(!file||!currentUser)throw new Error('Connecte-toi avant de modifier ta photo.');if(file.size>5*1024*1024)throw new Error('La photo doit faire 5 Mo maximum.');if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Format accepté : JPG, PNG ou WebP.');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=`${currentUser.id}/avatar-${Date.now()}.${ext}`;const {error:upErr}=await supabase.storage.from('profile-photos').upload(path,file,{upsert:true,contentType:file.type});if(upErr)throw upErr;const {data}=supabase.storage.from('profile-photos').getPublicUrl(path);const {error}=await supabase.from('profiles').upsert({id:currentUser.id,avatar_url:data.publicUrl});if(error)throw error;setAvatar(data.publicUrl);message('Photo de profil mise à jour.');}
 function updateAuthUI(session){
   currentUser=session?.user||null;
   const status=$("authStatus");
@@ -62,6 +65,7 @@ async function signIn(){
   updateAuthUI(data);
   await recordEvent("login");
   await restoreState();
+  await loadProfile();
   message("Connexion réussie. Tes données sont synchronisées.");
 }
 async function signUp(){
@@ -73,7 +77,7 @@ async function signUp(){
   if(data.user && data.session){
     currentUser=data.user; await refreshRole(); updateAuthUI(data);
     await supabase.from("profiles").upsert({id:data.user.id,display_name});
-    await recordEvent("signup"); await restoreState(); show("dashboard");
+    await recordEvent("signup"); await restoreState(); await loadProfile(); show("dashboard");
   }
   message(data.session?"Compte créé et connecté.":"Compte créé. Vérifie ta boîte e-mail pour confirmer l'inscription.");
 }
@@ -132,17 +136,18 @@ async function boot(){
   $("authForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await signIn()}catch(err){message(err.message,true)}});
   $("signUpBtn")?.addEventListener("click",async()=>{try{await signUp()}catch(err){message(err.message,true)}});
   $("resetPasswordBtn")?.addEventListener("click",async()=>{try{await resetPassword()}catch(err){message(err.message,true)}});
-  $("signOutBtn")?.addEventListener("click",async()=>{await syncState();await supabase.auth.signOut();currentUser=null;adminRole=null;updateAuthUI(null);message("Déconnexion effectuée.")});
+  $('signOutBtn')?.addEventListener('click',async()=>{await syncState();const {error}=await supabase.auth.signOut();if(error){message(error.message,true);return;}currentUser=null;adminRole=null;updateAuthUI(null);['authName','authEmail','authPassword'].forEach(id=>{if($(id))$(id).value=''});if($('profilePhotoInput'))$('profilePhotoInput').value='';setAvatar('');show('dashboard');message('Déconnexion effectuée. Les champs du formulaire ont été vidés.');});
+  $('profilePhotoInput')?.addEventListener('change',async e=>{try{await uploadAvatar(e.target.files?.[0])}catch(err){message(err.message,true)}finally{e.target.value=''}});
   $("refreshAdminBtn")?.addEventListener("click",async()=>{try{await loadAdmin()}catch(e){message(e.message,true)}});
   $("moderatorForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await addModerator()}catch(err){message(err.message,true)}});
   supabase.auth.onAuthStateChange(async(_event,session)=>{
     currentUser=session?.user||null;
-    if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();if(adminRole==="owner"||adminRole==="moderator"){show("admin");await loadAdmin()}}
+    if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await loadProfile();if(adminRole==="owner"||adminRole==="moderator"){show("admin");await loadAdmin()}}
     else updateAuthUI(null);
   });
   const {data:{session}}=await supabase.auth.getSession();
   currentUser=session?.user||null;
-  if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await recordEvent("session_start");if(adminRole==="owner"||adminRole==="moderator"){show("admin");await loadAdmin()}}
+  if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await loadProfile();await recordEvent("session_start");if(adminRole==="owner"||adminRole==="moderator"){show("admin");await loadAdmin()}}
   else updateAuthUI(null);
   window.addEventListener("appinstalled",()=>recordEvent("pwa_install",{platform:"browser_appinstalled"}));
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&currentUser)recordEvent("app_open")});
