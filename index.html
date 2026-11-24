@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101522">
+  <meta name="description" content="HUMAN+ — Build yourself. Become more.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <title>HUMAN+ — Your growth, your pace</title>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="HUMAN+ home"><span class="brand-mark">H+</span><span>HUMAN<span class="brand-plus">+</span></span></a>
+      <div class="side-label" data-i18n="workspace">ESPACE PERSONNEL</div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard"><span>▦</span><b data-i18n="overview">Vue d'ensemble</b></button>
+        <button class="nav-item" data-view="fitness"><span>◈</span><b data-i18n="fitness">Fitness</b></button>
+        <button class="nav-item" data-view="habits"><span>✦</span><b data-i18n="habits">Habitudes</b></button>
+        <button class="nav-item" data-view="nutrition"><span>◉</span><b data-i18n="nutrition">Nutrition</b></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="upgrade-mini"><div class="spark">✧</div><strong data-i18n="goFurther">Va plus loin.</strong><p data-i18n="premiumTeaser">Découvre bientôt les outils Premium.</p><button class="text-btn" data-view="premium" data-i18n="discover">Découvrir →</button></div>
+        <div class="profile-mini"><div class="avatar">H</div><div><strong data-i18n="yourSpace">Ton espace</strong><small data-i18n="localProfile">Profil local</small></div><span class="online-dot"></span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="brand-mark">H+</span> HUMAN<span class="brand-plus">+</span></div>
+        <div class="breadcrumb" data-i18n="personalSpace">Espace personnel</div>
+        <div class="top-actions">
+          <label class="language-label" for="language">◎ <span data-i18n="language">Langue</span></label>
+          <select id="language" aria-label="Language">
+            <option value="fr">FR</option><option value="en">EN</option><option value="wo">WO</option>
+          </select>
+          <button class="auth-top-btn" id="openAuthBtn">Compte</button>
+          
+          <button class="icon-btn" id="resetBtn" title="Reset demo" aria-label="Reset demo">↺</button>
+        </div>
+      </header>
+
+      <section class="view active" id="dashboard">
+        <div class="welcome-row">
+          <div><div class="eyebrow"><span class="pulse"></span><span data-i18n="dailyOverview">TON POINT DE DÉPART</span></div>
+            <h1><span data-i18n="hello">Salut, prêt à progresser ?</span> <span class="wave">✦</span></h1>
+            <p class="muted" data-i18n="welcomeSub">Chaque petite action compte. Avance à ton rythme.</p>
+          </div>
+          <div class="date-chip" id="todayDate"></div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-copy"><div class="hero-tag" data-i18n="weeklyFocus">FOCUS DE LA SEMAINE</div><h2 data-i18n="heroTitle">Construis ta<br><em>meilleure version.</em></h2><p data-i18n="heroText">Un objectif à la fois. Une journée après l'autre.</p><button class="primary-btn" data-view="habits"><span data-i18n="startNow">Commencer maintenant</span> <b>↗</b></button></div>
+          <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-number">01<span>/03</span></div><div class="hero-person">✦</div><div class="hero-caption" data-i18n="yourJourney">TON PARCOURS</div></div>
+        </div>
+        <div class="section-heading"><div><div class="eyebrow" data-i18n="yourProgress">TES PROGRÈS</div><h2 data-i18n="keepMomentum">Garde ton élan</h2></div><span class="subtle-pill" data-i18n="today">AUJOURD'HUI</span></div>
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-top"><span data-i18n="workouts">Séances</span><span class="stat-icon orange">◈</span></div><strong id="workoutCount">0</strong><small data-i18n="workoutsDone">séances terminées</small><div class="mini-bar"><i id="workoutBar"></i></div></article>
+          <article class="stat-card"><div class="stat-top"><span data-i18n="habitsDone">Habitudes</span><span class="stat-icon violet">✦</span></div><strong id="habitCount">0<span class="small-total">/3</span></strong><small data-i18n="dailyHabits">objectifs quotidiens</small><div class="mini-bar violet-bar"><i id="habitBar"></i></div></article>
+          <article class="stat-card"><div class="stat-top"><span data-i18n="water">Hydratation</span><span class="stat-icon blue">◉</span></div><strong id="waterCount">0<span class="small-total">/8</span></strong><small data-i18n="glasses">verres d'eau</small><div class="mini-bar blue-bar"><i id="waterBar"></i></div></article>
+        </div>
+        <div class="dashboard-columns">
+          <article class="panel"><div class="panel-head"><div><div class="eyebrow" data-i18n="plan">TON PLAN</div><h3 data-i18n="todayPlan">Aujourd'hui</h3></div><button class="plain-link" data-view="fitness" data-i18n="seeAll">Voir tout ↗</button></div>
+            <div class="plan-item"><div class="plan-icon orange-bg">◈</div><div class="plan-info"><strong data-i18n="trainingSession">Séance d'entraînement</strong><small data-i18n="trainingHint">Bouge selon ton niveau</small></div><span class="time-tag">30 min</span></div>
+            <div class="plan-item"><div class="plan-icon violet-bg">✦</div><div class="plan-info"><strong data-i18n="dailyHabitsTitle">Habitudes quotidiennes</strong><small data-i18n="habitsHint">Construis ta régularité</small></div><span class="time-tag">10 min</span></div>
+            <div class="plan-item"><div class="plan-icon blue-bg">◉</div><div class="plan-info"><strong data-i18n="mealPlanning">Repas équilibrés</strong><small data-i18n="mealHint">Prépare ta journée</small></div><span class="time-tag">15 min</span></div>
+          </article>
+          <article class="panel quote-panel"><div class="quote-mark">“</div><p data-i18n="quote">La discipline transforme les petites actions en grands changements.</p><span>— HUMAN+</span><div class="quote-decoration">H+</div></article>
+        </div>
+      </section>
+
+      <section class="view" id="fitness">
+        <div class="page-intro"><div class="eyebrow">H+ FITNESS</div><h1 data-i18n="fitnessTitle">Ton entraînement, ton rythme.</h1><p class="muted" data-i18n="fitnessSub">Planifie tes séances et garde une trace de tes efforts.</p></div>
+        <div class="two-col">
+          <article class="panel"><div class="panel-head"><div><div class="eyebrow" data-i18n="quickLog">SUIVI RAPIDE</div><h3 data-i18n="logWorkout">Enregistrer une séance</h3></div><span class="stat-icon orange">◈</span></div>
+            <form id="workoutForm" class="form-stack"><label data-i18n="activity">Activité</label><select id="activity"><option value="Musculation">Musculation</option><option value="Basketball">Basketball</option><option value="Course">Course</option><option value="Marche">Marche</option><option value="Mobilité">Mobilité</option></select><label data-i18n="duration">Durée (minutes)</label><input id="duration" type="number" min="1" max="300" value="30" required><label data-i18n="intensity">Intensité</label><select id="intensity"><option data-i18n="light" value="Légère">Légère</option><option data-i18n="moderate" value="Modérée" selected>Modérée</option><option data-i18n="high" value="Élevée">Élevée</option></select><button class="primary-btn full" type="submit" data-i18n="saveSession">Enregistrer la séance +</button></form>
+          </article>
+          <article class="panel accent-panel"><div class="eyebrow" data-i18n="trainingTip">CONSEIL D'ENTRAÎNEMENT</div><h3 data-i18n="trainSmart">Entraîne-toi intelligemment.</h3><p data-i18n="trainTipText">Choisis une intensité adaptée à ton niveau, échauffe-toi et laisse à ton corps le temps de récupérer.</p><div class="tip-icon">⚡</div></article>
+        </div>
+        <article class="panel history-panel"><div class="panel-head"><h3 data-i18n="recentSessions">Séances récentes</h3><span class="subtle-pill" id="sessionTotal">0</span></div><div id="workoutHistory" class="empty-state" data-i18n="noSessions">Aucune séance enregistrée pour le moment.</div></article>
+      </section>
+
+      <section class="view" id="habits">
+        <div class="page-intro"><div class="eyebrow">H+ DEVELOPMENT</div><h1 data-i18n="habitsTitle">Les petites victoires comptent.</h1><p class="muted" data-i18n="habitsSub">Coche tes habitudes et construis ta régularité, un jour à la fois.</p></div>
+        <article class="panel"><div class="panel-head"><div><div class="eyebrow" data-i18n="dailyRoutine">ROUTINE QUOTIDIENNE</div><h3 data-i18n="yourHabits">Mes habitudes</h3></div><span class="subtle-pill" id="habitProgress">0/3</span></div><div id="habitList" class="habit-list"></div><div class="progress-track"><i id="habitProgressBar"></i></div><p class="muted small" data-i18n="habitEncourage">La constance vaut mieux que la perfection.</p></article>
+        <article class="panel add-habit-panel"><h3 data-i18n="addHabit">Ajouter une habitude</h3><form id="habitForm" class="inline-form"><input id="newHabit" type="text" maxlength="50" placeholder="Ex. Lire 10 minutes" required><button class="primary-btn" type="submit" data-i18n="add">Ajouter +</button></form></article>
+      </section>
+
+      <section class="view" id="nutrition">
+        <div class="page-intro"><div class="eyebrow">H+ NUTRITION</div><h1 data-i18n="nutritionTitle">Prends soin de ton énergie.</h1><p class="muted" data-i18n="nutritionSub">Un suivi simple pour mieux organiser tes repas et ton hydratation.</p></div>
+        <div class="two-col">
+          <article class="panel water-panel"><div class="panel-head"><div><div class="eyebrow" data-i18n="hydration">HYDRATATION</div><h3 data-i18n="waterToday">Eau consommée</h3></div><span class="stat-icon blue">◉</span></div><div class="water-display"><strong id="waterBig">0</strong><span>/ 8 <small data-i18n="glassesDay">verres par jour</small></span></div><div class="water-cups" id="waterCups"></div><div class="button-row"><button class="secondary-btn" id="waterMinus">−</button><button class="primary-btn" id="waterPlus" data-i18n="addGlass">+ Ajouter un verre</button></div></article>
+          <article class="panel"><div class="eyebrow" data-i18n="mealIdeas">ORGANISATION</div><h3 data-i18n="mealPrep">Prépare tes repas</h3><p class="muted" data-i18n="mealPrepText">Pense à varier les aliments et à adapter les portions à tes besoins.</p><div class="meal-list"><div><span class="meal-dot breakfast"></span><b data-i18n="breakfast">Petit-déjeuner</b><small data-i18n="breakfastHint">Une source d'énergie + protéines</small></div><div><span class="meal-dot lunch"></span><b data-i18n="lunch">Déjeuner</b><small data-i18n="lunchHint">Légumes + féculents + protéines</small></div><div><span class="meal-dot dinner"></span><b data-i18n="dinner">Dîner</b><small data-i18n="dinnerHint">Un repas varié et rassasiant</small></div></div></article>
+        </div>
+        <p class="disclaimer" data-i18n="nutritionDisclaimer">Ces repères sont généraux et ne remplacent pas un avis médical ou diététique personnalisé.</p>
+      </section>
+
+      <section class="view" id="premium">
+        <div class="page-intro"><div class="eyebrow">H+ PREMIUM</div><h1 data-i18n="premiumTitle">Plus d'outils. Plus de possibilités.</h1><p class="muted" data-i18n="premiumSub">HUMAN+ restera accessible gratuitement. Les options Premium viendront enrichir l'expérience.</p></div>
+        <div class="premium-card"><div class="premium-icon">✧</div><div class="eyebrow" data-i18n="comingSoon">BIENTÔT DISPONIBLE</div><h2>HUMAN+ <span>PREMIUM</span></h2><p data-i18n="premiumFeatures">Programmes avancés, statistiques détaillées, plans personnalisés et assistant IA.</p><button class="secondary-btn" disabled data-i18n="notAvailable">Paiements non activés</button></div>
+      </section>
+
+
+      <section class="view" id="account">
+        <div class="page-intro"><div class="eyebrow">H+ ACCOUNT</div><h1>Ton compte HUMAN+</h1><p class="muted">Connecte-toi pour retrouver tes données sur tes appareils.</p></div>
+        <div class="two-col">
+          <article class="panel">
+            <div class="panel-head"><h3>Connexion / Inscription</h3><span class="subtle-pill" id="authStatus">Hors ligne</span></div>
+            <form id="authForm" class="form-stack">
+              <label for="authName">Nom affiché (pour l'inscription)</label><input id="authName" maxlength="80" autocomplete="name" placeholder="Ton nom">
+              <label for="authEmail">Adresse e-mail</label><input id="authEmail" type="email" autocomplete="email" required placeholder="nom@exemple.com">
+              <label for="authPassword">Mot de passe</label><input id="authPassword" type="password" minlength="8" autocomplete="current-password" required placeholder="8 caractères minimum">
+              <div class="button-row"><button class="primary-btn" type="submit" id="signInBtn">Se connecter</button><button class="secondary-btn" type="button" id="signUpBtn">Créer un compte</button></div>
+              <button class="text-btn" type="button" id="resetPasswordBtn">Mot de passe oublié ?</button>
+              <button class="secondary-btn" type="button" id="signOutBtn" hidden>Se déconnecter</button>
+            </form>
+            <p class="muted small" id="authMessage" aria-live="polite">Configure Supabase pour activer les comptes.</p>
+          </article>
+          <article class="panel"><div class="eyebrow">SYNCHRONISATION</div><h3>Un seul compte, plusieurs appareils</h3><p class="muted">Après connexion, HUMAN+ synchronise les séances, habitudes, hydratation et préférences de langue dans ton espace privé.</p><p class="muted small">Les données restent privées grâce aux règles RLS de Supabase.</p></article>
+        </div>
+      </section>
+
+      <section class="view" id="admin" hidden>
+        <div class="page-intro"><div class="eyebrow">H+ CONTROL CENTER</div><h1>Administration HUMAN+</h1><p class="muted">Statistiques et gestion des accès. Les données affichées dépendent des événements réellement collectés.</p></div>
+        <div class="stats-grid admin-stats">
+          <article class="stat-card"><div class="stat-top"><span>Inscriptions</span><span class="stat-icon violet">＋</span></div><strong id="adminSignups">—</strong><small>Total des comptes</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Connexions</span><span class="stat-icon blue">↗</span></div><strong id="adminLogins">—</strong><small>Événements enregistrés</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Installations PWA</span><span class="stat-icon orange">▣</span></div><strong id="adminInstalls">—</strong><small>Installations détectées</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Utilisateurs actifs</span><span class="stat-icon violet">●</span></div><strong id="adminActive">—</strong><small>Sur les 30 derniers jours</small></article>
+        </div>
+        <div class="two-col">
+          <article class="panel"><div class="panel-head"><h3>Abonnements</h3><span class="subtle-pill" id="adminSubs">—</span></div><p class="muted">Abonnements actifs enregistrés dans la base.</p></article>
+          <article class="panel"><div class="panel-head"><h3>Revenus</h3><span class="subtle-pill" id="adminRevenue">—</span></div><p class="muted">Somme des paiements confirmés enregistrés. Aucun paiement n'est traité par cette version.</p></article>
+        </div>
+        <article class="panel"><div class="panel-head"><h3>Activité récente</h3><button class="plain-link" id="refreshAdminBtn">Actualiser ↻</button></div><div id="adminEvents" class="empty-state">Aucune donnée chargée.</div></article>
+        <article class="panel"><div class="panel-head"><h3>Modérateurs autorisés</h3></div><form id="moderatorForm" class="inline-form"><input id="moderatorEmail" type="email" placeholder="E-mail du compte existant" required><button class="primary-btn" type="submit">Autoriser modérateur</button></form><div id="moderatorList" class="muted small">Chargement…</div><p class="muted small">Le rôle est attribué côté base de données. Un modérateur ne peut pas promouvoir d'autres administrateurs.</p></article>
+      </section>
+      <footer class="footer"><span>© 2026 HUMAN+</span><span data-i18n="footerNote">Avance à ton rythme. Respecte tes limites.</span></footer>
+    </main>
+  </div>
+  <nav class="mobile-nav"><button class="active" data-view="dashboard">▦<small data-i18n="home">Accueil</small></button><button data-view="fitness">◈<small data-i18n="fitness">Fitness</small></button><button data-view="habits">✦<small data-i18n="habits">Habitudes</small></button><button data-view="nutrition">◉<small data-i18n="nutrition">Nutrition</small></button></nav>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>\n  <script src="supabase-config.js"></script>\n  <script type="module" src="supabase-auth.js"></script>
+</body>
+</html>

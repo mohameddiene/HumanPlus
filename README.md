@@ -1,0 +1,41 @@
+# HUMAN+ — PWA + Supabase Auth & Admin
+
+## Ce que contient cette version
+- Compte client : inscription, connexion, déconnexion, réinitialisation par e-mail.
+- Synchronisation cloud des séances, habitudes, hydratation et langue après connexion.
+- Espace admin masqué par défaut et accessible uniquement aux rôles `owner` et `moderator`.
+- Le compte `lebusinessman008@gmail.com` reçoit automatiquement le rôle `owner` lors de son inscription Supabase. Si le compte existe déjà, le SQL attribue aussi le rôle.
+- Le propriétaire peut autoriser un modérateur existant par e-mail depuis l'administration.
+- Statistiques : comptes, connexions enregistrées, installations PWA détectées, utilisateurs actifs (30 jours), abonnements et revenus confirmés.
+
+## Configuration obligatoire
+Cette archive est un kit d'intégration prêt à configurer, pas un backend déjà connecté. Il faut créer ton propre projet Supabase.
+
+1. Crée un projet sur https://supabase.com/.
+2. Dans Supabase > SQL Editor, exécute entièrement `supabase-schema.sql`.
+3. Dans Project Settings > API, copie l'URL du projet et la clé publique `anon` (ou publishable key).
+4. Remplace les deux valeurs dans `supabase-config.js`.
+   - `HUMAN_PLUS_SUPABASE_URL`: URL `https://....supabase.co`
+   - `HUMAN_PLUS_SUPABASE_ANON_KEY`: clé publique anon/publishable.
+   - Ne mets JAMAIS la clé `service_role` dans le site, le ZIP, GitHub ou le navigateur.
+5. Dans Authentication > URL Configuration, ajoute l'URL de ton site dans Site URL et Redirect URLs.
+6. Déploie le dossier sur Vercel ou un hébergeur HTTPS.
+7. Inscris-toi avec `lebusinessman008@gmail.com`, confirme l'e-mail si la confirmation est activée, puis connecte-toi. Tu seras automatiquement dirigé vers l'administration.
+8. Pour autoriser un modérateur : la personne doit d'abord créer son compte. Ensuite, depuis ton panneau admin, saisis l'adresse e-mail de ce compte.
+
+## Sécurité et limites à connaître
+- L'administration n'est pas présente dans la navigation publique. Le rôle est vérifié dans Supabase et protégé par RLS ; masquer un écran seul n'est jamais une sécurité suffisante.
+- Le rôle `owner` est attribué par trigger SQL à l'adresse exacte `lebusinessman008@gmail.com`. Le client ne peut pas modifier son rôle.
+- Les mots de passe ne sont jamais lisibles dans l'administration.
+- Les événements de connexion du tableau de bord sont ceux que l'application enregistre lors des connexions/session starts. Pour une journalisation exhaustive, utiliser en plus les journaux d'authentification Supabase ou un webhook serveur.
+- Les installations PWA ne sont pas détectables sur tous les navigateurs. Le compteur représente uniquement les événements `appinstalled` reçus, pas toutes les installations réelles ni tous les appareils.
+- Les abonnements et revenus sont en lecture seule dans le panneau. Cette version ne facture personne. Ils doivent être alimentés par un prestataire de paiement via une Edge Function/webhook vérifié. Ne jamais écrire un paiement confirmé depuis le navigateur.
+- Le compte propriétaire ne doit pas être partagé. Active la confirmation e-mail et une politique de mot de passe solide dans Supabase.
+- Les anciennes données locales du prototype ne sont pas automatiquement transférées au compte cloud ; la première connexion initialise le cloud avec les données locales présentes sur cet appareil.
+
+## Lancement local
+L'authentification Supabase nécessite un serveur local, pas l'ouverture directe du fichier HTML.
+- VS Code + Live Server, ou
+- `python -m http.server 8000`, puis ouvrir `http://localhost:8000`.
+
+La PWA nécessite HTTPS en production (localhost est accepté pour le développement).
