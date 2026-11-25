@@ -8,6 +8,7 @@ let supabase = null;
 let currentUser = null;
 let adminRole = null;
 let syncTimer = null;
+let syncFails = 0;
 
 function message(text, bad=false) {
   const el=$("authMessage"); if(el){el.textContent=text;el.style.color=bad?"#ff8d8d":"";}
@@ -23,7 +24,11 @@ async function recordEvent(event_type, metadata={}) {
 async function syncState(){
   if(!supabase || !currentUser || !window.HP_GET_STATE) return;
   const data=window.HP_GET_STATE();
-  await supabase.from("user_data").upsert({user_id:currentUser.id,data,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+  const {error}=await supabase.from("user_data").upsert({user_id:currentUser.id,data,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+  if(error){
+    console.error("Synchronisation impossible :",error.message);
+    if(syncFails++<5){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncState(),8000)}
+  }else syncFails=0;
 }
 window.HP_RECORD_EVENT=(type,metadata={})=>recordEvent(type,metadata);
 window.HP_SYNC=()=>{
@@ -129,6 +134,50 @@ async function addModerator(){
   message(data||"Accès modérateur mis à jour.");
   await loadAdmin();
 }
+
+// ---- Rappels en arrière-plan (notifications push) ----
+function b64ToU8(b){const p="=".repeat((4-b.length%4)%4),s=(b+p).replace(/-/g,"+").replace(/_/g,"/"),r=atob(s);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))}
+const vapidKey=()=>window.HUMAN_PLUS_VAPID_PUBLIC_KEY||"";
+async function pushStatus(){
+  if(!("serviceWorker" in navigator)||!("PushManager" in window)||typeof Notification==="undefined")return "unsupported";
+  if(!vapidKey())return "noconfig";
+  if(!currentUser)return "nologin";
+  if(Notification.permission==="denied")return "denied";
+  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub&&Notification.permission==="granted")return "on"}catch{}
+  return "off";
+}
+async function pushEnable(){
+  if(!currentUser)throw new Error("Connecte-toi d'abord (onglet Compte).");
+  if(!vapidKey())throw new Error("Clé VAPID manquante dans supabase-config.js.");
+  if(Notification.permission!=="granted"){const perm=await Notification.requestPermission();if(perm!=="granted")throw new Error("Notifications refusées par le navigateur.")}
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub){
+    try{sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(vapidKey())})}
+    catch(e){if(e?.name==="InvalidStateError"){const old=await reg.pushManager.getSubscription();await old?.unsubscribe();sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(vapidKey())})}else throw e}
+  }
+  const j=sub.toJSON();
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
+  const {error}=await supabase.from("push_subscriptions").upsert({user_id:currentUser.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,tz,user_agent:navigator.userAgent.slice(0,200),updated_at:new Date().toISOString()},{onConflict:"endpoint"});
+  if(error)throw error;
+  await syncState();   // envoie les rappels au serveur tout de suite
+  return true;
+}
+async function pushDisable(silent){
+  try{
+    const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();
+    if(sub){await supabase?.from("push_subscriptions").delete().eq("endpoint",sub.endpoint);await sub.unsubscribe()}
+  }catch(e){if(!silent)throw e}
+}
+async function pushTest(){
+  const {data,error}=await supabase.functions.invoke("send-reminders",{body:{test:true}});
+  if(error)throw error;
+  if(data&&data.ok===false)throw new Error(data.error||"Échec de l'envoi du test.");
+  return data;
+}
+async function pushQuietRefresh(){try{if(await pushStatus()==="on")await pushEnable()}catch{}}
+function authChanged(){window.dispatchEvent(new Event("hp-auth"))}
+window.HP_PUSH={status:pushStatus,enable:pushEnable,disable:()=>pushDisable(false),test:pushTest};
 function show(view){
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===view));
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
@@ -148,7 +197,7 @@ async function boot(){
   $("authForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await signIn()}catch(err){message(err.message,true)}});
   $("signUpBtn")?.addEventListener("click",async()=>{try{await signUp()}catch(err){message(err.message,true)}});
   $("resetPasswordBtn")?.addEventListener("click",async()=>{try{await resetPassword()}catch(err){message(err.message,true)}});
-  $('signOutBtn')?.addEventListener('click',async()=>{await syncState();const {error}=await supabase.auth.signOut();if(error){message(error.message,true);return;}currentUser=null;adminRole=null;updateAuthUI(null);['authName','authEmail','authPassword'].forEach(id=>{if($(id))$(id).value=''});if($('profilePhotoInput'))$('profilePhotoInput').value='';setAvatar('');show('dashboard');message('Déconnexion effectuée. Les champs du formulaire ont été vidés.');});
+  $('signOutBtn')?.addEventListener('click',async()=>{await pushDisable(true);await syncState();const {error}=await supabase.auth.signOut();if(error){message(error.message,true);return;}currentUser=null;adminRole=null;updateAuthUI(null);['authName','authEmail','authPassword'].forEach(id=>{if($(id))$(id).value=''});if($('profilePhotoInput'))$('profilePhotoInput').value='';setAvatar('');show('dashboard');message('Déconnexion effectuée. Les champs du formulaire ont été vidés.');});
   $('changeProfilePhotoBtn')?.addEventListener('click',()=>{if(!currentUser){message('Connecte-toi pour modifier ta photo.',true);return;}$('profilePhotoInput')?.click()});
   $('profilePhotoInput')?.addEventListener('change',async e=>{try{await uploadAvatar(e.target.files?.[0])}catch(err){message(err.message,true)}finally{e.target.value=''}});
   $("refreshAdminBtn")?.addEventListener("click",async()=>{try{await loadAdmin()}catch(e){message(e.message,true)}});
@@ -157,11 +206,14 @@ async function boot(){
     currentUser=session?.user||null;
     if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await loadProfile();if(adminRole==="owner"||adminRole==="moderator"){show("dashboard");}}
     else updateAuthUI(null);
+    authChanged();if(currentUser)pushQuietRefresh();
   });
   const {data:{session}}=await supabase.auth.getSession();
   currentUser=session?.user||null;
   if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await loadProfile();await recordEvent("session_start");if(adminRole==="owner"||adminRole==="moderator"){show("dashboard");}}
   else updateAuthUI(null);
+  authChanged();if(currentUser)pushQuietRefresh();
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&currentUser){clearTimeout(syncTimer);syncState()}});
   window.addEventListener("appinstalled",()=>recordEvent("pwa_install",{platform:"browser_appinstalled"}));
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&currentUser)recordEvent("app_open")});
 }

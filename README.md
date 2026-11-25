@@ -66,3 +66,14 @@ Dans Supabase > SQL Editor, exécuter le fichier `supabase-schema.sql` complet. 
 - Conditions intelligentes : pas de rappel d'eau si les 8 verres sont bus ; pas de rappel d'objectifs si toutes les habitudes sont faites.
 - Bouton « Ouvrir » dans l'alerte pour aller directement à la bonne page.
 - Les rappels liés aux abonnements, essai gratuit et promotions (007 à 010) viendront avec l'activation des paiements.
+
+## V6 — Rappels en arrière-plan (notifications push)
+
+- Les rappels arrivent maintenant en notification même application fermée, via une fonction Supabase appelée chaque minute.
+- Mise en place (une seule fois) : suivre `GUIDE_NOTIFICATIONS.md`. Fichiers : `outils/generer-cles-vapid.html`, `supabase-push.sql`, `supabase-cron.sql`, `supabase/functions/send-reminders/index.ts`.
+- Sans cette configuration, l'appli fonctionne comme en V5 (rappels visibles à l'ouverture).
+
+## V7 — Protection de l'historique Outdoor
+
+- À la connexion, l'historique Outdoor local est **fusionné** avec celui du compte (avant : le compte écrasait le téléphone, ce qui pouvait faire disparaître des activités non synchronisées).
+- Synchronisation plus fiable : nouvelle tentative en cas d'échec et envoi immédiat quand l'appli passe en arrière-plan.

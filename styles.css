@@ -46,3 +46,5 @@
 .rem-tpl{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:#182235;color:var(--text);border-radius:16px;padding:13px}
 .rem-tpl-icon{font-size:24px;flex:none}.rem-tpl-text{flex:1;min-width:0}.rem-tpl-text strong{display:block}.rem-tpl-text small{display:block;color:var(--muted);margin-top:3px;line-height:1.4}
 .rem-tpl b{font-size:11px;color:var(--orange);white-space:nowrap}.rem-tpl.added{opacity:.6}.rem-tpl.added b{color:var(--green)}
+
+.rem-perm{align-items:flex-start}.rem-push{flex-basis:100%;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px}.rem-push small{display:block;line-height:1.45}

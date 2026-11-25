@@ -1,4 +1,4 @@
-const CACHE = "human-plus-v7";
+const CACHE = "human-plus-v9";
 const ASSETS = ["/", "/index.html", "/styles.css", "/app.js", "/outdoor.js", "/reminders.js", "/supabase-auth.js", "/supabase-config.js", "/manifest.webmanifest", "/icons/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 // Installation : un fichier manquant ne doit jamais faire échouer tout le service worker
@@ -28,13 +28,32 @@ self.addEventListener("fetch", e => {
   );
 });
 
-// Clic sur une notification de rappel : ouvre ou ramène HUMAN+ au premier plan
+// Notification push reçue du serveur (application fermée comprise)
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(d.title || "HUMAN+", {
+    body: d.body || "",
+    tag: d.tag || undefined,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    vibrate: [200, 100, 200],
+    renotify: !!d.tag,
+    data: { url: d.url || "/" }
+  }));
+});
+
+// Clic sur une notification : ouvre ou ramène HUMAN+ au premier plan, sur la bonne page
 self.addEventListener("notificationclick", e => {
   e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "/";
+  const go = new URL(url, self.location.origin).hash.slice(1);
   e.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
-      for (const c of list) { if ("focus" in c) return c.focus(); }
-      return self.clients.openWindow("/");
+      for (const c of list) {
+        if ("focus" in c) { c.postMessage({ go }); return c.focus(); }
+      }
+      return self.clients.openWindow(url);
     })
   );
 });

@@ -165,7 +165,23 @@ function addTemplate(id){
   reminders.push({id:"r"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),tpl:id,date:null,endTime:null,on:true,...JSON.parse(JSON.stringify(t.data))});
   save();render();window.toast?.("Rappel ajouté : "+t.label);return true;
 }
-function render(){if(!$("remCalendar"))return;renderPerm();renderCalendar();renderDay();renderTemplates();renderList()}
+const PUSH_TXT={
+  unsupported:["Rappels en arrière-plan indisponibles sur ce navigateur.","Sur iPhone : installe d'abord HUMAN+ sur l'écran d'accueil (Safari, Partager, Sur l'écran d'accueil)."],
+  noconfig:["Rappels en arrière-plan : configuration serveur à terminer.","Suis le guide GUIDE_NOTIFICATIONS.md (clé VAPID manquante)."],
+  nologin:["Rappels en arrière-plan : connexion requise.","Connecte-toi dans l'onglet Compte pour les activer."],
+  denied:["Notifications bloquées.","Autorise-les dans les paramètres du site du navigateur, puis reviens ici."],
+  off:["Rappels en arrière-plan désactivés.","Active-les pour être notifié même quand l'application est fermée."],
+  on:["Rappels en arrière-plan activés ✓","Tu recevras les notifications même application fermée."]
+};
+async function renderPush(){
+  if(!$("remPushText"))return;
+  let st="unsupported";try{st=window.HP_PUSH?await window.HP_PUSH.status():"unsupported"}catch{}
+  const [t,h]=PUSH_TXT[st]||PUSH_TXT.unsupported;
+  $("remPushText").textContent=t;$("remPushHelp").textContent=h;
+  $("remPushBtn").hidden=st!=="off";
+  $("remPushTest").hidden=st!=="on";$("remPushOff").hidden=st!=="on";
+}
+function render(){if(!$("remCalendar"))return;renderPerm();renderPush();renderCalendar();renderDay();renderTemplates();renderList()}
 
 // ---- Formulaire ----
 function renderIcons(){
@@ -231,11 +247,18 @@ function init(){
   $("remCancel").onclick=()=>{$("remForm").hidden=true;editing=null};
   $("remForm").addEventListener("submit",submitForm);
   $("remRepeat").onchange=syncRepeatUI;$("remEvery").onchange=syncRepeatUI;
+  $("remPushBtn").onclick=async()=>{try{await window.HP_PUSH.enable();window.toast?.("Rappels en arrière-plan activés")}catch(e){window.toast?.(e?.message||"Activation impossible")}renderPush()};
+  $("remPushOff").onclick=async()=>{try{await window.HP_PUSH.disable();window.toast?.("Rappels en arrière-plan désactivés")}catch(e){window.toast?.(e?.message||"Erreur")}renderPush()};
+  $("remPushTest").onclick=async()=>{try{await window.HP_PUSH.test();window.toast?.("Test envoyé : la notification arrive dans quelques secondes")}catch(e){const m=String(e?.message||"");window.toast?.(/non-2xx|404|not found|Failed to send/i.test(m)?"Fonction serveur introuvable ou en erreur : voir le guide":(m||"Échec du test"))}};
+  window.addEventListener("hp-auth",renderPush);
+  navigator.serviceWorker?.addEventListener("message",ev=>{if(ev.data&&ev.data.go)window.showView?.(ev.data.go)});
+  {const h=location.hash.slice(1);if(h&&document.getElementById(h)?.classList.contains("view"))setTimeout(()=>window.showView?.(h),0)}
   $("remPermBtn").onclick=async()=>{try{await Notification.requestPermission()}catch{}renderPerm()};
   render();tick();
   setInterval(tick,15000);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick()});
 }
+window.HP_REM_RENDER=render;
 window.HP_REM_ADD_TEMPLATE=addTemplate;
 window.HP_REM_GET=()=>reminders;
 window.HP_REM_SET=list=>{if(!Array.isArray(list))return;reminders=list;ls.set("reminders",reminders);render()};
