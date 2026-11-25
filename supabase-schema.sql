@@ -28,7 +28,7 @@ create table if not exists public.user_data (
 create table if not exists public.user_events (
   id bigint generated always as identity primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
-  event_type text not null check (event_type in ('signup','login','session_start','app_open','pwa_install','workout_saved','habit_updated')),
+  event_type text not null check (event_type in ('signup','login','session_start','app_open','pwa_install','workout_saved','habit_updated','water_added','outdoor_saved')),
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
@@ -53,6 +53,11 @@ create table if not exists public.revenue_events (
   provider_reference text unique,
   created_at timestamptz not null default now()
 );
+
+-- Extend accepted events for Outdoor on both fresh and existing installations.
+alter table public.user_events drop constraint if exists user_events_event_type_check;
+alter table public.user_events add constraint user_events_event_type_check
+  check (event_type in ('signup','login','session_start','app_open','pwa_install','workout_saved','habit_updated','water_added','outdoor_saved'));
 
 -- Automatically create a profile and assign the owner role only to the exact owner email.
 create or replace function public.handle_new_user()

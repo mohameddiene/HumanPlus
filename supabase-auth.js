@@ -25,6 +25,7 @@ async function syncState(){
   const data=window.HP_GET_STATE();
   await supabase.from("user_data").upsert({user_id:currentUser.id,data,updated_at:new Date().toISOString()},{onConflict:"user_id"});
 }
+window.HP_RECORD_EVENT=(type,metadata={})=>recordEvent(type,metadata);
 window.HP_SYNC=()=>{
   if(!currentUser || !supabase) return;
   clearTimeout(syncTimer);
@@ -54,7 +55,7 @@ function updateAuthUI(session){
   if($("authName")) $("authName").disabled=!!currentUser;
   if($("openAuthBtn")) $("openAuthBtn").textContent=currentUser?"Mon compte":"Connexion";
   const canAdmin=(adminRole==="owner"||adminRole==="moderator");
-  const adminView=$("admin"); if(adminView) adminView.hidden=!canAdmin;
+  const adminView=$("admin"); if(adminView) adminView.hidden=!canAdmin;const supervise=$("superviseNav");if(supervise)supervise.hidden=!canAdmin;const superviseMobile=$("superviseMobileNav");if(superviseMobile)superviseMobile.hidden=!canAdmin;
 }
 async function signIn(){
   const email=$("authEmail").value.trim(),password=$("authPassword").value;
@@ -98,7 +99,7 @@ async function loadAdmin(){
     supabase.from("user_events").select("user_id").gte("created_at",since),
     supabase.from("subscriptions").select("id",{count:"exact",head:true}).eq("status","active"),
     supabase.from("revenue_events").select("amount,currency").eq("status","confirmed"),
-    supabase.from("user_events").select("event_type,created_at,metadata,user_id").order("created_at",{ascending:false}).limit(12),
+    supabase.from("user_events").select("event_type,created_at,metadata,user_id").order("created_at",{ascending:false}).limit(500),
     supabase.from("admin_roles").select("user_id,role,profiles(display_name,email)")
   ]);
   const put=(id,v)=>{if($(id))$(id).textContent=v};
@@ -107,7 +108,14 @@ async function loadAdmin(){
   put("adminSubs",subs.count??"—");
   const totals={};(payments.data||[]).forEach(x=>{const c=x.currency||"XOF";totals[c]=(totals[c]||0)+Number(x.amount||0)});
   put("adminRevenue",Object.keys(totals).length?Object.entries(totals).map(([c,v])=>money(v,c)).join(" · "):"0 XOF");
-  $("adminEvents").innerHTML=(recent.data||[]).map(e=>`<div class="history-row"><span><b>${String(e.event_type).replaceAll("_"," ")}</b><small>${new Date(e.created_at).toLocaleString("fr-FR")}</small></span><small>${e.user_id.slice(0,8)}…</small></div>`).join("")||"Aucun événement.";
+  const allEvents=recent.data||[];
+  const draw=(id,items)=>{const el=$(id);if(!el)return;const max=Math.max(1,...items.map(x=>x.value));el.innerHTML=items.map(x=>`<div class="chart-bar-wrap"><div class="chart-value">${x.value}</div><div class="chart-bar" style="height:${Math.max(5,x.value/max*100)}%"></div><small>${x.label}</small></div>`).join("")||"<span class=muted>Pas encore de données.</span>"};
+  const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return d.toISOString().slice(0,10)});
+  const accountSeries=days.map(day=>({label:day.slice(5),value:allEvents.filter(e=>e.created_at?.slice(0,10)===day&&["signup","login"].includes(e.event_type)).length}));draw("chartAccounts",accountSeries);
+  draw("chartFitness",[{label:"Séances",value:allEvents.filter(e=>e.event_type==="workout_saved").length}]);draw("chartHabits",[{label:"Actions",value:allEvents.filter(e=>e.event_type==="habit_updated").length}]);draw("chartNutrition",[{label:"Verres ajoutés",value:allEvents.filter(e=>e.event_type==="water_added").length}]);
+  draw("chartOutdoor",[{label:"Course",value:allEvents.filter(e=>e.event_type==="outdoor_saved"&&e.metadata?.type==="Course").length},{label:"Vélo",value:allEvents.filter(e=>e.event_type==="outdoor_saved"&&e.metadata?.type==="Vélo").length},{label:"Marche",value:allEvents.filter(e=>e.event_type==="outdoor_saved"&&e.metadata?.type==="Marche").length},{label:"Rapide",value:allEvents.filter(e=>e.event_type==="outdoor_saved"&&e.metadata?.type==="Marche rapide").length}]);
+  draw("chartRevenue",[{label:"Actifs",value:subs.count||0},{label:"Paiements",value:(payments.data||[]).length}]);
+  $("adminEvents").innerHTML=(recent.data||[]).slice(0,12).map(e=>`<div class="history-row"><span><b>${String(e.event_type).replaceAll("_"," ")}</b><small>${new Date(e.created_at).toLocaleString("fr-FR")}</small></span><small>${e.user_id.slice(0,8)}…</small></div>`).join("")||"Aucun événement.";
   $("moderatorList").textContent=(mods.data||[]).filter(x=>x.role==="moderator").map(x=>x.profiles?.email||x.user_id).join(" · ")||"Aucun modérateur.";
 }
 async function addModerator(){
@@ -123,6 +131,7 @@ function show(view){
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===view));
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
   window.scrollTo({top:0,behavior:"smooth"});
+  if(view==="admin")loadAdmin().catch(e=>message(e.message,true));
 }
 async function boot(){
   if(!configured){
@@ -132,22 +141,24 @@ async function boot(){
   }
   supabase=createClient(url,anon,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   $("openAuthBtn")?.addEventListener("click",()=>show("account"));
-  $("openAdminBtn")?.addEventListener("click",async()=>{show("admin");await loadAdmin()});
+  $("superviseNav")?.addEventListener("click",async()=>{if(adminRole){show("admin");await loadAdmin()}});
+  window.HP_LOAD_ADMIN=()=>{if(adminRole)return loadAdmin()};
   $("authForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await signIn()}catch(err){message(err.message,true)}});
   $("signUpBtn")?.addEventListener("click",async()=>{try{await signUp()}catch(err){message(err.message,true)}});
   $("resetPasswordBtn")?.addEventListener("click",async()=>{try{await resetPassword()}catch(err){message(err.message,true)}});
   $('signOutBtn')?.addEventListener('click',async()=>{await syncState();const {error}=await supabase.auth.signOut();if(error){message(error.message,true);return;}currentUser=null;adminRole=null;updateAuthUI(null);['authName','authEmail','authPassword'].forEach(id=>{if($(id))$(id).value=''});if($('profilePhotoInput'))$('profilePhotoInput').value='';setAvatar('');show('dashboard');message('Déconnexion effectuée. Les champs du formulaire ont été vidés.');});
+  $('changeProfilePhotoBtn')?.addEventListener('click',()=>{if(!currentUser){message('Connecte-toi pour modifier ta photo.',true);return;}$('profilePhotoInput')?.click()});
   $('profilePhotoInput')?.addEventListener('change',async e=>{try{await uploadAvatar(e.target.files?.[0])}catch(err){message(err.message,true)}finally{e.target.value=''}});
   $("refreshAdminBtn")?.addEventListener("click",async()=>{try{await loadAdmin()}catch(e){message(e.message,true)}});
   $("moderatorForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await addModerator()}catch(err){message(err.message,true)}});
   supabase.auth.onAuthStateChange(async(_event,session)=>{
     currentUser=session?.user||null;
-    if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await loadProfile();if(adminRole==="owner"||adminRole==="moderator"){show("admin");await loadAdmin()}}
+    if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await loadProfile();if(adminRole==="owner"||adminRole==="moderator"){show("dashboard");}}
     else updateAuthUI(null);
   });
   const {data:{session}}=await supabase.auth.getSession();
   currentUser=session?.user||null;
-  if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await loadProfile();await recordEvent("session_start");if(adminRole==="owner"||adminRole==="moderator"){show("admin");await loadAdmin()}}
+  if(currentUser){await refreshRole();updateAuthUI(session);await restoreState();await loadProfile();await recordEvent("session_start");if(adminRole==="owner"||adminRole==="moderator"){show("dashboard");}}
   else updateAuthUI(null);
   window.addEventListener("appinstalled",()=>recordEvent("pwa_install",{platform:"browser_appinstalled"}));
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&currentUser)recordEvent("app_open")});

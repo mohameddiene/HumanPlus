@@ -14,7 +14,7 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="#" aria-label="HUMAN+ home"><span class="brand-mark">H+</span><span>HUMAN<span class="brand-plus">+</span></span></a>
+      <a class="brand" href="#dashboard" data-home-link aria-label="HUMAN+ accueil"><span class="brand-mark"><span>H</span><i>+</i></span><span>HUMAN<span class="brand-plus">+</span></span></a>
       <div class="side-label" data-i18n="workspace">ESPACE PERSONNEL</div>
       <nav class="nav">
         <button class="nav-item active" data-view="dashboard"><span>▦</span><b data-i18n="overview">Vue d'ensemble</b></button>
@@ -22,6 +22,7 @@
         <button class="nav-item" data-view="outdoor"><span>⌁</span><b>H+ Outdoor</b></button>
         <button class="nav-item" data-view="habits"><span>✦</span><b data-i18n="habits">Habitudes</b></button>
         <button class="nav-item" data-view="nutrition"><span>◉</span><b data-i18n="nutrition">Nutrition</b></button>
+        <button class="nav-item admin-nav" data-view="admin" id="superviseNav" hidden><span>▤</span><b>Superviser</b></button>
       </nav>
       <div class="sidebar-bottom">
         <div class="upgrade-mini"><div class="spark">✧</div><strong data-i18n="goFurther">Va plus loin.</strong><p data-i18n="premiumTeaser">Découvre bientôt les outils Premium.</p><button class="text-btn" data-view="premium" data-i18n="discover">Découvrir →</button></div>
@@ -31,13 +32,15 @@
 
     <main class="main">
       <header class="topbar">
-        <div class="mobile-brand"><span class="brand-mark">H+</span> HUMAN<span class="brand-plus">+</span></div>
+        <a class="mobile-brand" href="#dashboard" data-home-link><span class="brand-mark"><span>H</span><i>+</i></span> HUMAN<span class="brand-plus">+</span></a>
         <div class="breadcrumb" data-i18n="personalSpace">Espace personnel</div>
         <div class="top-actions">
           <label class="language-label" for="language">◎ <span data-i18n="language">Langue</span></label>
           <select id="language" aria-label="Language">
             <option value="fr">FR</option><option value="en">EN</option><option value="wo">WO</option>
           </select>
+          <button class="secondary-btn install-btn" id="installPwaBtn">↓ Installer</button>
+          <button class="icon-btn notification-btn" id="notificationBtn" aria-label="Activer les notifications" title="Notifications">♢</button>
           <button class="auth-top-btn" id="openAuthBtn">Compte</button>
           
 
@@ -124,7 +127,7 @@
             <div class="panel-head"><h3>Connexion / Inscription</h3><span class="subtle-pill" id="authStatus">Hors ligne</span></div>
             <form id="authForm" class="form-stack">
               <label for="authName">Nom affiché (pour l'inscription)</label><input id="authName" maxlength="80" autocomplete="name" placeholder="Ton nom">
-              <div class="profile-photo-area"><div class="profile-photo-preview" id="profilePhotoPreview">H+</div><div><label for="profilePhotoInput">Photo de profil</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp"><small class="muted">JPG, PNG ou WebP · 5 Mo maximum</small></div></div>
+              <div class="profile-photo-area"><div class="profile-photo-preview" id="profilePhotoPreview">H+</div><div><input id="profilePhotoInput" type="file" accept="image/*" hidden><button class="secondary-btn" type="button" id="changeProfilePhotoBtn">Modifier la photo de profil</button><small class="muted">Choisis appareil photo ou galerie · 5 Mo maximum</small></div></div>
               <label for="authEmail">Adresse e-mail</label><input id="authEmail" type="email" autocomplete="email" required placeholder="nom@exemple.com">
               <label for="authPassword">Mot de passe</label><input id="authPassword" type="password" minlength="8" autocomplete="current-password" required placeholder="8 caractères minimum">
               <div class="button-row"><button class="primary-btn" type="submit" id="signInBtn">Se connecter</button><button class="secondary-btn" type="button" id="signUpBtn">Créer un compte</button></div>
@@ -138,12 +141,20 @@
       </section>
 
       <section class="view" id="admin" hidden>
-        <div class="page-intro"><div class="eyebrow">H+ CONTROL CENTER</div><h1>Administration HUMAN+</h1><p class="muted">Statistiques et gestion des accès. Les données affichées dépendent des événements réellement collectés.</p></div>
+        <div class="page-intro"><div class="eyebrow">H+ CONTROL CENTER</div><h1>Superviser HUMAN+</h1><p class="muted">Statistiques et gestion des accès. Les données affichées dépendent des événements réellement collectés.</p></div>
         <div class="stats-grid admin-stats">
           <article class="stat-card"><div class="stat-top"><span>Inscriptions</span><span class="stat-icon violet">＋</span></div><strong id="adminSignups">—</strong><small>Total des comptes</small></article>
           <article class="stat-card"><div class="stat-top"><span>Connexions</span><span class="stat-icon blue">↗</span></div><strong id="adminLogins">—</strong><small>Événements enregistrés</small></article>
           <article class="stat-card"><div class="stat-top"><span>Installations PWA</span><span class="stat-icon orange">▣</span></div><strong id="adminInstalls">—</strong><small>Installations détectées</small></article>
           <article class="stat-card"><div class="stat-top"><span>Utilisateurs actifs</span><span class="stat-icon violet">●</span></div><strong id="adminActive">—</strong><small>Sur les 30 derniers jours</small></article>
+        </div>
+        <div class="admin-charts">
+          <article class="panel"><div class="panel-head"><h3>Inscriptions & connexions</h3><span class="subtle-pill">30 jours</span></div><div id="chartAccounts" class="chart-bars"></div></article>
+          <article class="panel"><div class="panel-head"><h3>Fitness</h3><span class="subtle-pill">Séances</span></div><div id="chartFitness" class="chart-bars"></div></article>
+          <article class="panel"><div class="panel-head"><h3>Habitudes</h3><span class="subtle-pill">Mises à jour</span></div><div id="chartHabits" class="chart-bars"></div></article>
+          <article class="panel"><div class="panel-head"><h3>Nutrition</h3><span class="subtle-pill">Hydratation</span></div><div id="chartNutrition" class="chart-bars"></div></article>
+          <article class="panel"><div class="panel-head"><h3>Outdoor</h3><span class="subtle-pill">Activités enregistrées</span></div><div id="chartOutdoor" class="chart-bars"></div></article>
+          <article class="panel"><div class="panel-head"><h3>Abonnements & revenus</h3><span class="subtle-pill">État actuel</span></div><div id="chartRevenue" class="chart-bars"></div></article>
         </div>
         <div class="two-col">
           <article class="panel"><div class="panel-head"><h3>Abonnements</h3><span class="subtle-pill" id="adminSubs">—</span></div><p class="muted">Abonnements actifs enregistrés dans la base.</p></article>
@@ -155,8 +166,9 @@
       <footer class="footer"><span>© 2026 HUMAN+</span><span data-i18n="footerNote">Avance à ton rythme. Respecte tes limites.</span></footer>
     </main>
   </div>
-  <nav class="mobile-nav"><button class="active" data-view="dashboard">▦<small data-i18n="home">Accueil</small></button><button data-view="fitness">◈<small data-i18n="fitness">Fitness</small></button><button data-view="outdoor">⌁<small>Outdoor</small></button><button data-view="habits">✦<small data-i18n="habits">Habitudes</small></button><button data-view="nutrition">◉<small data-i18n="nutrition">Nutrition</small></button></nav>
+  <nav class="mobile-nav"><button class="active" data-view="dashboard">▦<small data-i18n="home">Accueil</small></button><button data-view="fitness">◈<small data-i18n="fitness">Fitness</small></button><button data-view="outdoor">⌁<small>Outdoor</small></button><button data-view="habits">✦<small data-i18n="habits">Habitudes</small></button><button data-view="nutrition">◉<small data-i18n="nutrition">Nutrition</small></button><button data-view="admin" id="superviseMobileNav" hidden>▤<small>Superviser</small></button></nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="notificationPanel" class="notification-panel" hidden><div class="panel-head"><h3>Notifications</h3><button class="plain-link" id="closeNotifications">Fermer</button></div><div id="notificationItems">Aucune notification.</div></div>
   <script src="app.js"></script>
   <script src="supabase-config.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
