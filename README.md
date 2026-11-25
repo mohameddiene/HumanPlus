@@ -53,3 +53,16 @@ Dans Supabase > SQL Editor, exécuter le fichier `supabase-schema.sql` complet. 
 
 - Le centre Notifications propose un panneau de notifications et demande l’autorisation du navigateur. Les notifications push à distance (serveur/VAPID) ne sont pas encore configurées.
 - Le GPS Outdoor fonctionne pendant que l’application reste active au premier plan. Une PWA ne garantit pas le suivi quand l’écran est verrouillé ou le navigateur suspendu.
+
+## V4 — Rappels et photos de profil
+
+- Nouvel onglet **Rappels** (fichier `reminders.js`) : calendrier mensuel, rappels à heure fixe, jours choisis, une seule fois, ou répétés toutes les N heures (ex. eau toutes les 2 h de 08:00 à 20:00). Boutons « Fait ✓ » et « +10 min ». Les rappels sont synchronisés avec le compte (table `user_data`).
+- Limite : sans serveur de notifications, les rappels sonnent quand HUMAN+ est ouverte ou en arrière-plan. Application fermée : non garanti.
+- Photos de profil : compression automatique (carré 512 px, JPG) et enregistrement corrigé. Exécuter **une fois** `supabase-photos-rappels.sql` dans Supabase (Éditeur SQL).
+
+## V5 — Modèles de rappels
+
+- Onglet **Rappels** : 5 modèles prêts à activer (séance de sport, objectifs du jour, eau, activité Outdoor, bilan de progression).
+- Conditions intelligentes : pas de rappel d'eau si les 8 verres sont bus ; pas de rappel d'objectifs si toutes les habitudes sont faites.
+- Bouton « Ouvrir » dans l'alerte pour aller directement à la bonne page.
+- Les rappels liés aux abonnements, essai gratuit et promotions (007 à 010) viendront avec l'activation des paiements.

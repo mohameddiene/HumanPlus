@@ -36,8 +36,8 @@ applyLanguage();
 if("serviceWorker" in navigator && location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(()=>{}))}
 
 // Public hooks used by the Supabase integration. No credentials are stored here.
-window.HP_GET_STATE=()=>({lang:state.lang,workouts:state.workouts,habits:state.habits,checked:state.checked,water:state.water,outdoorHistory:(()=>{try{return JSON.parse(localStorage.getItem("humanplus_outdoor_history_v1")||"[]")}catch{return []}})()});
-window.HP_SET_STATE=(data)=>{if(!data||typeof data!=="object")return;state.lang=data.lang||state.lang;state.workouts=Array.isArray(data.workouts)?data.workouts:state.workouts;state.habits=Array.isArray(data.habits)?data.habits:state.habits;state.checked=Array.isArray(data.checked)?data.checked:state.checked;state.water=Number.isFinite(data.water)?data.water:state.water;if(Array.isArray(data.outdoorHistory))localStorage.setItem("humanplus_outdoor_history_v1",JSON.stringify(data.outdoorHistory));save();applyLanguage();window.HP_RENDER_OUTDOOR?.()};
+window.HP_GET_STATE=()=>({lang:state.lang,workouts:state.workouts,habits:state.habits,checked:state.checked,water:state.water,outdoorHistory:(()=>{try{return JSON.parse(localStorage.getItem("humanplus_outdoor_history_v1")||"[]")}catch{return []}})(),reminders:window.HP_REM_GET?window.HP_REM_GET():undefined});
+window.HP_SET_STATE=(data)=>{if(!data||typeof data!=="object")return;state.lang=data.lang||state.lang;state.workouts=Array.isArray(data.workouts)?data.workouts:state.workouts;state.habits=Array.isArray(data.habits)?data.habits:state.habits;state.checked=Array.isArray(data.checked)?data.checked:state.checked;state.water=Number.isFinite(data.water)?data.water:state.water;if(Array.isArray(data.outdoorHistory))localStorage.setItem("humanplus_outdoor_history_v1",JSON.stringify(data.outdoorHistory));save();applyLanguage();window.HP_RENDER_OUTDOOR?.();if(Array.isArray(data.reminders))window.HP_REM_SET?.(data.reminders)};
 window.HP_REFRESH=()=>{save();applyLanguage()};
 
 // Installation PWA et notifications locales
