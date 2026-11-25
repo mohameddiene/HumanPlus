@@ -33,7 +33,7 @@ $("habitForm").addEventListener("submit",e=>{e.preventDefault();const text=$("ne
 $("waterPlus").addEventListener("click",()=>{state.water=Math.min(20,state.water+1);save();render();window.HP_RECORD_EVENT?.("water_added",{total:state.water})});$("waterMinus").addEventListener("click",()=>{state.water=Math.max(0,state.water-1);save();render()});
 
 applyLanguage();
-if("serviceWorker" in navigator && location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+if("serviceWorker" in navigator && location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(()=>{}))}
 
 // Public hooks used by the Supabase integration. No credentials are stored here.
 window.HP_GET_STATE=()=>({lang:state.lang,workouts:state.workouts,habits:state.habits,checked:state.checked,water:state.water,outdoorHistory:(()=>{try{return JSON.parse(localStorage.getItem("humanplus_outdoor_history_v1")||"[]")}catch{return []}})()});
